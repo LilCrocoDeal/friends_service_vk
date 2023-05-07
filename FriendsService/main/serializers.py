@@ -10,8 +10,13 @@ class FriendsSerializer(serializers.ModelSerializer):
         fields = ("friend",)
 
 
+class FriendsDeleteSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    error = 'Invalid data'
+
+
 class FriendshipRequestsSendSerializer(serializers.ModelSerializer):
-    error = ''
+    error = 'Invalid data'
 
     class Meta:
         model = FriendshipRequests
@@ -19,20 +24,20 @@ class FriendshipRequestsSendSerializer(serializers.ModelSerializer):
 
     def second_validation(self, user):
         if self.validated_data.get("to_user") == str(user):
-            self.error = 'Вы пытаетесь добавить в друзья самого себя'
+            self.error = 'Are you trying to add yourself as a friend'
             return False
-        if len(User.objects.filter(username=self.validated_data.get("to_user"))) == 0:
-            self.error = 'Вы пытаетесь добавить в друзья несуществующего пользователя'
+        if not len(User.objects.filter(username=self.validated_data.get("to_user"))):
+            self.error = 'You are trying to add a non-existent user as a friend'
             return False
 
         if len(FriendshipRequests.objects.filter(from_user=user,
                                                  to_user=self.validated_data.get("to_user"))) > 0:
-            self.error = 'Вы уже отправляли заявку в друзья этому пользователю'
+            self.error = 'You have already sent a friend request to this user'
             return False
 
         if len(Friends.objects.filter(core_person=user,
                                       friend=self.validated_data.get("to_user"))) > 0:
-            self.error = 'Вы с пользователем и так находитесь в друзьях'
+            self.error = 'You and the user are already friends'
             return False
 
         return True
@@ -54,7 +59,16 @@ class FriendshipRequestsSendSerializer(serializers.ModelSerializer):
             return new_request
 
 
-class FriendshipRequestsGetSerializer(serializers.ModelSerializer):
+class RequestsSerializer(serializers.ModelSerializer):
     class Meta:
         model = FriendshipRequests
-        fields = ("from_user", "status",)
+        fields = ("from_user", "to_user", "status",)
+
+
+class RequestManageSerializer(serializers.Serializer):
+    decision = serializers.BooleanField()
+    request_sender = serializers.CharField()
+    error = 'Invalid data'
+
+
+

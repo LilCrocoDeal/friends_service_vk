@@ -9,4 +9,4 @@ class Friends(models.Model):
 class FriendshipRequests(models.Model):
     to_user = models.CharField(max_length=50)
     from_user = models.CharField(max_length=50)
-    status = models.CharField(default="has been sent", max_length=15)
+    status = models.CharField(default="has been sent", max_length=21)
