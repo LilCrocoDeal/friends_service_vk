@@ -148,7 +148,7 @@ SWAGGER_SETTINGS = {
             'description': '''Register user in /authusers post, login user in /authtoken/login post and then use 
             requested token in format "Token {requested token}"'''
         }
-    },
+    }
 }
 
 

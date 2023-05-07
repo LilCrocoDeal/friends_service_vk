@@ -5,5 +5,6 @@ from . import views
 
 urlpatterns = [
     path('friends/', views.FriendsView.as_view()),
+    path('requests/send/', views.RequestsSendView.as_view()),
     path('requests/', views.RequestsView.as_view()),
 ]
