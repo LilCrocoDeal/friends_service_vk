@@ -1,1 +1,0 @@
-# friens_service_vk
