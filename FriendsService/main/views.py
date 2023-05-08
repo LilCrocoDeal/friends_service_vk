@@ -31,7 +31,7 @@ class FriendsDeleteView(APIView):
     @swagger_auto_schema(
         operation_description="Delete one of your friends by username.",
         request_body=FriendsDeleteSerializer(),
-        responses={201: "The user has been successfully removed from friends",
+        responses={200: "The user has been successfully removed from friends",
                    401: "Error: Unauthorized",
                    400: "You can't remove yourself from your friends\nThis user is not exist\n"
                         "You are not friends with this user"}
@@ -51,7 +51,7 @@ class FriendsDeleteView(APIView):
                 Friends.objects.get(core_person=username, friend=request.user).delete()
                 FriendshipRequests.objects.create(to_user=request.user,
                                                   from_user=username, status="rejected by receiver")
-                return Response({"detail": "The user has been successfully removed from friends"}, status=201)
+                return Response({"detail": "The user has been successfully removed from friends"}, status=200)
         return Response(message.error, status=400)
 
 
@@ -62,7 +62,7 @@ class RequestsSendView(APIView):
         operation_description="Send friend request to existing user. In the field "
                               "\"to_user\" write down the chosen user's name",
         request_body=FriendshipRequestsSendSerializer(),
-        responses={201: "The request has been sent",
+        responses={200: "The request has been sent",
                    401: "Error: Unauthorized",
                    400: "You are trying to add yourself as a friend\n"
                         "You are trying to add a non-existent user as a friend\n"
@@ -74,7 +74,7 @@ class RequestsSendView(APIView):
         if message.is_valid():
             if message.second_validation(request.user):
                 message.save(from_user=request.user)
-                return Response({"detail": "The request has been sent"}, status=201)
+                return Response({"detail": "The request has been sent"}, status=200)
         return Response(message.error, status=400)
 
 
@@ -100,8 +100,8 @@ class RequestsManageView(APIView):
                               "down \"1\" in the field \"decision\", to reject - \"0\". In the field "
                               "\"request_sender\" write down the chosen user's name.",
         request_body=RequestManageSerializer(),
-        responses={201: "The user has been added to your friends\n"
-                   "The user's request was rejected",
+        responses={201: "The user has been added to your friends",
+                   200: "The user's request was rejected",
                    401: "Error: Unauthorized",
                    400: "Invalid data"}
     )
@@ -123,7 +123,7 @@ class RequestsManageView(APIView):
                                                          to_user=request.user)
                 current.status = "rejected by receiver"
                 current.save()
-                return Response({"detail": "The user's request was rejected"}, status=201)
+                return Response({"detail": "The user's request was rejected"}, status=200)
         return Response(message.error, status=400)
 
 
@@ -134,7 +134,7 @@ class InfoView(APIView):
     @swagger_auto_schema(
         manual_parameters=[query_param],
         operation_description="Get information about your relationship with the requested user.",
-        responses={201: "This user is you\nThis user has sent you a friend request\n"
+        responses={200: "This user is you\nThis user has sent you a friend request\n"
                         "You have sent this user a friend request\nYou are friends with this user\n"
                         "You don't have any interactions with this user",
                    401: "This user is not exist"}
@@ -144,12 +144,12 @@ class InfoView(APIView):
         if not len(User.objects.filter(username=username)):
             return Response({"detail": "This user is not exist"}, status=400)
         elif username == request.user.username:
-            return Response({"detail": "This user is you"}, status=201)
+            return Response({"detail": "This user is you"}, status=200)
         elif len(FriendshipRequests.objects.filter(to_user=request.user, from_user=username)) > 0:
-            return Response({"detail": "This user has sent you a friend request"}, status=201)
+            return Response({"detail": "This user has sent you a friend request"}, status=200)
         elif len(FriendshipRequests.objects.filter(to_user=username, from_user=request.user)) > 0:
-            return Response({"detail": "You have sent this user a friend request"}, status=201)
+            return Response({"detail": "You have sent this user a friend request"}, status=200)
         elif len(Friends.objects.filter(core_person=request.user, friend=username)) > 0:
-            return Response({"detail": "You are friends with this user"}, status=201)
+            return Response({"detail": "You are friends with this user"}, status=200)
         else:
-            return Response({"detail": "You don't have any interactions with this user"}, status=201)
+            return Response({"detail": "You don't have any interactions with this user"}, status=200)
