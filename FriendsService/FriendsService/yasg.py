@@ -8,7 +8,20 @@ schema_view = get_schema_view(
    openapi.Info(
       title="Friends Service",
       default_version='1.0.0',
-      description="Test description",
+      description="This site allows users to find friends.\n\n\n"
+                  "How to use:\n\n"
+                  "- To create your profile use /authusers/ (method:post) and write down your username and password. "
+                  "Username must be unique.\n\n"
+                  "- To authorize use /authtoken/login/ and enter your login with password. If they "
+                  "are correct, response will give you token you have to copy and paste in field "
+                  "\"Authorize\" upper in format: \"Token {token_from_response}\".\n\n"
+                  "- You can add friend by sending request to existing user in /requests/send/ (method:post).\n\n"
+                  "- Check all friend requests related with you in /requests/ (method:get).\n\n"
+                  "- Accept or reject friend requests from user in /requests/manage/ (method:get).\n\n"
+                  "- View info about your interactions on this site with any user in /info.\n\n"
+                  "- Check all your friends in /friends/ (method:get).\n\n"
+                  "- Delete your friend in /friends/delete/ (method:delete). \n\n"
+                  "- To logout please visit /authtoken/logout/. Also please logout in \"Authorize\" upper.\n\n",
       terms_of_service="https://www.google.com/policies/terms/",
       license=openapi.License(name="BSD License"),
    ),

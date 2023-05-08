@@ -1,4 +1,6 @@
 from django.contrib.auth.models import User
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import permissions
@@ -12,6 +14,11 @@ from .serializers import FriendsSerializer, FriendshipRequestsSendSerializer, \
 class FriendsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Get a list of current friends.",
+        responses={200: FriendsSerializer(many=True),
+                   401: "Error: Unauthorized"}
+    )
     def get(self, request):
         friends = Friends.objects.filter(core_person=request.user)
         serializer = FriendsSerializer(friends, many=True)
@@ -21,6 +28,14 @@ class FriendsView(APIView):
 class FriendsDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Delete one of your friends by username.",
+        request_body=FriendsDeleteSerializer(),
+        responses={201: "The user has been successfully removed from friends",
+                   401: "Error: Unauthorized",
+                   400: "You can't remove yourself from your friends\nThis user is not exist\n"
+                        "You are not friends with this user"}
+    )
     def delete(self, request):
         message = FriendsDeleteSerializer(data=request.data)
         if message.is_valid():
@@ -43,6 +58,17 @@ class FriendsDeleteView(APIView):
 class RequestsSendView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Send friend request to existing user. In the field "
+                              "\"to_user\" write down the chosen user's name",
+        request_body=FriendshipRequestsSendSerializer(),
+        responses={201: "The request has been sent",
+                   401: "Error: Unauthorized",
+                   400: "You are trying to add yourself as a friend\n"
+                        "You are trying to add a non-existent user as a friend\n"
+                        "You have already sent a friend request to this user\n"
+                        "You and the user are already friends"}
+    )
     def post(self, request):
         message = FriendshipRequestsSendSerializer(data=request.data)
         if message.is_valid():
@@ -55,6 +81,11 @@ class RequestsSendView(APIView):
 class RequestsView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Get a list of requests sent by you/to you.",
+        responses={200: RequestsSerializer(many=True),
+                   401: "Error: Unauthorized"}
+    )
     def get(self, request):
         request_list = FriendshipRequests.objects.filter(Q(to_user=request.user) | Q(from_user=request.user))
         serializer = RequestsSerializer(request_list, many=True)
@@ -64,6 +95,16 @@ class RequestsView(APIView):
 class RequestsManageView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
+    @swagger_auto_schema(
+        operation_description="Accept or reject request from chosen user. To accept request write "
+                              "down \"1\" in the field \"decision\", to reject - \"0\". In the field "
+                              "\"request_sender\" write down the chosen user's name.",
+        request_body=RequestManageSerializer(),
+        responses={201: "The user has been added to your friends\n"
+                   "The user's request was rejected",
+                   401: "Error: Unauthorized",
+                   400: "Invalid data"}
+    )
     def post(self, request):
         message = RequestManageSerializer(data=request.data)
         if message.is_valid() and len(FriendshipRequests.objects.filter(
@@ -88,7 +129,16 @@ class RequestsManageView(APIView):
 
 class InfoView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    query_param = openapi.Parameter("username", openapi.IN_QUERY, description="username", type=openapi.TYPE_STRING)
 
+    @swagger_auto_schema(
+        manual_parameters=[query_param],
+        operation_description="Get information about your relationship with the requested user.",
+        responses={201: "This user is you\nThis user has sent you a friend request\n"
+                        "You have sent this user a friend request\nYou are friends with this user\n"
+                        "You don't have any interactions with this user",
+                   401: "This user is not exist"}
+    )
     def get(self, request):
         username = request.query_params.get("username")
         if not len(User.objects.filter(username=username)):

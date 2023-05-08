@@ -145,7 +145,7 @@ SWAGGER_SETTINGS = {
             'type': 'apiKey',
             'in': 'header',
             'name': 'Authorization',
-            'description': '''Register user in /authusers post, login user in /authtoken/login post and then use 
+            'description': '''Register user in /authusers (method:post), login user in /authtoken/login and then use 
             requested token in format "Token {requested token}"'''
         }
     }

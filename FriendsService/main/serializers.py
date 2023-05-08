@@ -20,11 +20,11 @@ class FriendshipRequestsSendSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FriendshipRequests
-        fields = ("to_user", "status",)
+        fields = ("to_user",)
 
     def second_validation(self, user):
         if self.validated_data.get("to_user") == str(user):
-            self.error = 'Are you trying to add yourself as a friend'
+            self.error = 'You are trying to add yourself as a friend'
             return False
         if not len(User.objects.filter(username=self.validated_data.get("to_user"))):
             self.error = 'You are trying to add a non-existent user as a friend'
