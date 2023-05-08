@@ -4,7 +4,7 @@
 
 `docker build -t friends_service .`
 
-Будет создан образ __friends_service__, который можно будет запустить при помощи ввода в терминал
+Будет создан образ __friends_service__, который можно будет запустить при помощи ввода в консоль
 
 `docker run -p 8080:8000 -it --name fs friends_service`
 
