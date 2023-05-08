@@ -1,6 +1,6 @@
 # Документация проекта Friends Service
 ## Запуск
-Для запуска необходимо скачать [Dockerfile](./FriendsService/Dockerfile), запустить docker и написать в терминал команду 
+Для запуска необходимо скачать [Dockerfile](../FriendsService/Dockerfile), запустить docker и написать в терминал команду 
 
 `docker build -t friends_service .`
 
