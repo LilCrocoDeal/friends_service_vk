@@ -44,3 +44,140 @@
 
 Код проекта я старался писать понятно, чтобы не было проблем с его чтением.
 
+## Пример использования
+Создадим нового пользователя через `/authuser/ (method: post)`. Поле email заполнять не будем.
+```json
+{
+  "email": "",
+  "username": "friendly_bob",
+  "password": "bob55555"
+}
+```
+Введем его данные в `/authtoken/login`, залогинимся и получим в ответ токен
+```json
+{
+  "auth_token": "e6b1308ba2ed04076f6d1fa0820c96055907cca9"
+}
+```
+Скопировав его, введем его в поле __Authorize__ в формате `Token e6b1308ba2ed04076f6d1fa0820c96055907cca9`. Теперь, при запросах на сервер, у нас в
+header'е всегда будет правильный токен.
+
+Посмотрим в свой список запросов в друзья `/requests/`
+```json
+[]
+```
+Разлогинимся за данного пользователя, и с трех других тестовых 
+пользователей отправим ему запросы в друзья через `/requests/send/`. Теперь, снова посмотрев `/requests/`, мы увидим
+```json
+[
+  {
+    "from_user": "croc",
+    "to_user": "friendly_bob",
+    "status": "has been sent"
+  },
+  {
+    "from_user": "pablo",
+    "to_user": "friendly_bob",
+    "status": "has been sent"
+  },
+  {
+    "from_user": "plebeb",
+    "to_user": "friendly_bob",
+    "status": "has been sent"
+  }
+]
+```
+Отклоним заявки _pablo_ и _plebeb_'a, а заявку _croc_'а примем во вкладке `/requests/manage/`. Получив положительные ответы от сервера о рассортировке заявок, 
+мы увидим, что отклоненные заявки остались в `/requests/`, но их статус изменился
+```json
+[
+  {
+    "from_user": "pablo",
+    "to_user": "friendly_bob",
+    "status": "rejected by receiver"
+  },
+  {
+    "from_user": "plebeb",
+    "to_user": "friendly_bob",
+    "status": "rejected by receiver"
+  }
+]
+```
+В то время как _croc_ оказался в друзьях (`/friends/`)
+```json
+[
+  {
+    "friend": "croc"
+  }
+]
+```
+Решим принять одну из отклоненных заявок, например, _pablo_, в `/requests/manage/`, и теперь он тоже окажется у нас в друзьях
+```json
+[
+  {
+    "friend": "croc"
+  },
+  {
+    "friend": "pablo"
+  }
+]
+```
+Удалим из друзей _croc_'а при помощи `/friends/delete`. Теперь его заявка висит как отклоненная пользователем в `/requests` и он не может попытаться нашего 
+пользователя снова добавить в друзья. Параллельно отправим заявку `/requests/send/` в друзья еще одному пользователю и посмотрим наш список заявок
+```json
+[
+  {
+    "from_user": "plebeb",
+    "to_user": "friendly_bob",
+    "status": "rejected by receiver"
+  },
+  {
+    "from_user": "croc",
+    "to_user": "friendly_bob",
+    "status": "rejected by receiver"
+  },
+  {
+    "from_user": "friendly_bob",
+    "to_user": "mytimofeev",
+    "status": "has been sent"
+  }
+]
+```
+Как мы видим, отображаются все входящие и исходящие заявки. Отправим перекрестную заявку в друзья _plebeb_'у (`/request/send/`), и посмотрим список друзей:
+```json
+[
+  {
+    "friend": "pablo"
+  },
+  {
+    "friend": "plebeb"
+  }
+]
+```
+Соответственно, он был добавлен, в то же время он был убран из заявок:
+```json
+[
+  {
+    "from_user": "croc",
+    "to_user": "friendly_bob",
+    "status": "rejected by receiver"
+  },
+  {
+    "from_user": "friendly_bob",
+    "to_user": "mytimofeev",
+    "status": "has been sent"
+  }
+]
+```
+Посмотрим информацию о себе в `/info`. Нам выведут ответ
+```json
+{
+  "detail": "This user is you"
+}
+```
+При запросе информации уже о другом пользователе, например, _pablo_, мы узнаем, что
+```json
+{
+  "detail": "You are friends with this user"
+}
+```
