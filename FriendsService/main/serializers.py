@@ -15,6 +15,19 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return user
 
 
+class LoginUserSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+    def second_validation(self):
+        if len(User.objects.filter(username=self.validated_data.get("username"),
+               password=self.validated_data.get("password"))) > 0:
+            return True
+        return False
+
+
+
+
 class FriendsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friends

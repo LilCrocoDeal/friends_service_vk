@@ -12,7 +12,7 @@ from django.db.models import Q
 from .models import Friends, FriendshipRequests
 from .serializers import FriendsSerializer, FriendshipRequestsSendSerializer, \
     RequestsSerializer, RequestsManageSerializer, FriendsDeleteSerializer, \
-    CreateUserSerializer, RequestsDeleteSerializer
+    CreateUserSerializer, RequestsDeleteSerializer, LoginUserSerializer
 
 
 class RegistrationView(APIView):
@@ -33,20 +33,21 @@ class RegistrationView(APIView):
         return Response({"detail": "Invalid data"}, status=400)
 
 
-class LoginView(ObtainAuthToken):
+class LoginView(APIView):
 
     @swagger_auto_schema(
         operation_description="Obtain token to authenticate user.",
-        request_body=CreateUserSerializer(),
-        responses={200: CreateUserSerializer(),
+        request_body=LoginUserSerializer(),
+        responses={200: LoginUserSerializer(),
                    400: "Invalid data"}
     )
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            token, _ = Token.objects.get_or_create(user=user)
-            return Response({"token": token.key}, status=200)
+        message = LoginUserSerializer(data=request.data)
+        if message.is_valid():
+            if message.second_validation():
+                user = User.objects.get(username=message.validated_data.get("username"))
+                token, _ = Token.objects.get_or_create(user=user)
+                return Response({"token": token.key}, status=200)
         return Response({"detail": "Invalid data"}, status=400)
 
 
