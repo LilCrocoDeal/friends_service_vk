@@ -8,3 +8,5 @@
 
 [Dockerfile](./FriendsService/Dockerfile) - образ сервиса. Собирает контейнер, подтягивает Django код с текущего репозитория github. Требуемые зависимости
 python уже сформированы в лежащем здесь же [requirements.txt](./FriendsService/requirements.txt).
+
+Дополнительно были написаны [unit-тесты](./FriendsService/main/tests.py) для приложения.
