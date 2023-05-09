@@ -116,7 +116,7 @@ class RequestsSendView(APIView):
         operation_description="Send friend request to existing user. In the field "
                               "\"to_user\" write down the chosen user's name",
         request_body=FriendshipRequestsSendSerializer(),
-        responses={200: "The request has been sent",
+        responses={201: "The request has been sent",
                    401: "Error: Unauthorized",
                    400: "You are trying to add yourself as a friend\n"
                         "You are trying to add a non-existent user as a friend\n"
@@ -128,7 +128,7 @@ class RequestsSendView(APIView):
         if message.is_valid():
             if message.second_validation(request.user):
                 message.save(from_user=request.user)
-                return Response({"detail": "The request has been sent"}, status=200)
+                return Response({"detail": "The request has been sent"}, status=201)
         return Response(message.error, status=400)
 
 
