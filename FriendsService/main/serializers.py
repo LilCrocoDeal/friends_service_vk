@@ -4,6 +4,17 @@ from django.contrib.auth.models import User
 from .models import Friends, FriendshipRequests
 
 
+class CreateUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'password',)
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create(**validated_data)
+        return user
+
+
 class FriendsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Friends
@@ -65,9 +76,14 @@ class RequestsSerializer(serializers.ModelSerializer):
         fields = ("from_user", "to_user", "status",)
 
 
-class RequestManageSerializer(serializers.Serializer):
+class RequestsManageSerializer(serializers.Serializer):
     decision = serializers.BooleanField()
     request_sender = serializers.CharField()
+    error = {"detail": "Invalid data"}
+
+
+class RequestsDeleteSerializer(serializers.Serializer):
+    from_user = serializers.CharField()
     error = {"detail": "Invalid data"}
 
 

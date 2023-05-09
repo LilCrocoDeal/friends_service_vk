@@ -1,6 +1,9 @@
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import permissions
@@ -8,7 +11,57 @@ from django.db.models import Q
 
 from .models import Friends, FriendshipRequests
 from .serializers import FriendsSerializer, FriendshipRequestsSendSerializer, \
-    RequestsSerializer, RequestManageSerializer, FriendsDeleteSerializer
+    RequestsSerializer, RequestsManageSerializer, FriendsDeleteSerializer, \
+    CreateUserSerializer, RequestsDeleteSerializer
+
+
+class RegistrationView(APIView):
+
+    @swagger_auto_schema(
+        operation_description="Register user to service.",
+        request_body=CreateUserSerializer(),
+        responses={201: CreateUserSerializer(),
+                   400: "Invalid data"}
+    )
+    def post(self, request):
+        message = CreateUserSerializer(data=request.data)
+        if message.is_valid():
+            username = message.validated_data["username"]
+            password = message.validated_data["password"]
+            message.save()
+            return Response({"username": username, "password": password}, status=201)
+        return Response({"detail": "Invalid data"}, status=400)
+
+
+class LoginView(ObtainAuthToken):
+
+    @swagger_auto_schema(
+        operation_description="Obtain token to authenticate user.",
+        request_body=CreateUserSerializer(),
+        responses={200: CreateUserSerializer(),
+                   400: "Invalid data"}
+    )
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.validated_data["user"]
+            token, _ = Token.objects.get_or_create(user=user)
+            return Response({"token": token.key}, status=200)
+        return Response({"detail": "Invalid data"}, status=400)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Logout authenticated user.",
+        responses={200: "Success",
+                   401: "Error: Unauthorized"}
+    )
+    def get(self, request):
+        request.user.auth_token.delete()
+        logout(request)
+        return Response({"detail": "Success"}, status=200)
 
 
 class FriendsView(APIView):
@@ -99,14 +152,14 @@ class RequestsManageView(APIView):
         operation_description="Accept or reject request from chosen user. To accept request write "
                               "down \"1\" in the field \"decision\", to reject - \"0\". In the field "
                               "\"request_sender\" write down the chosen user's name.",
-        request_body=RequestManageSerializer(),
+        request_body=RequestsManageSerializer(),
         responses={201: "The user has been added to your friends",
                    200: "The user's request was rejected",
                    401: "Error: Unauthorized",
                    400: "Invalid data"}
     )
     def post(self, request):
-        message = RequestManageSerializer(data=request.data)
+        message = RequestsManageSerializer(data=request.data)
         if message.is_valid() and len(FriendshipRequests.objects.filter(
                 from_user=message.validated_data.get("request_sender"), to_user=request.user)) > 0:
 
@@ -124,6 +177,28 @@ class RequestsManageView(APIView):
                 current.status = "rejected by receiver"
                 current.save()
                 return Response({"detail": "The user's request was rejected"}, status=200)
+        return Response(message.error, status=400)
+
+
+class RequestsDeleteView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description="Delete one of the friend request was sent to you.",
+        request_body=RequestsDeleteSerializer(),
+        responses={200: "The request has been successfully removed",
+                   401: "Error: Unauthorized",
+                   400: "Invalid data"}
+    )
+    def delete(self, request):
+        message = RequestsDeleteSerializer(data=request.data)
+        if message.is_valid():
+            username = message.validated_data.get("from_user")
+            if not len(FriendshipRequests.objects.filter(to_user=request.user, from_user=username)):
+                return Response(message.error, status=400)
+            else:
+                FriendshipRequests.objects.get(to_user=request.user, from_user=username).delete()
+                return Response({"detail": "The request has been successfully removed"}, status=200)
         return Response(message.error, status=400)
 
 
